@@ -2,16 +2,16 @@
  "name": "wp-classmap-watcher",
   "displayName": "WP Classmap: Lightning Fast Autoloading",
   "description": "Auto-rebuilds PHP classmap(s) when files are added, deleted or renamed in a WordPress plugin",
-  "version": "0.1.1",
-  "publisher": "Saurab Gupta",
-  "homepage": "http://saurabgupta.in/",
+  "version": "1.0.0",
+  "publisher": "saurab-gupta",
+  "homepage": "https://saurabgupta.in/projects/wp-classmap-watcher",
   "repository": {
     "type": "git",
     "url": "https://github.com/saurab1996/wp-classmap-watcher"
   },
   "author": {
     "name": "Saurab Gupta",
-    "url": "http://saurabgupta.in/"
+    "url": "https://saurabgupta.in/"
   },
   "engines": {
     "vscode": "^1.70.0"

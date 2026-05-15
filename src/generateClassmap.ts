@@ -5,8 +5,15 @@ import { ClassInfo, ClassMap, DirectoryConfig, GenerateResult } from './types';
 // ─── PHP Parsing ─────────────────────────────────────────────────────────────
 
 function extractClassInfo(content: string): ClassInfo | null {
-    const nsMatch    = content.match(/^namespace\s+([^;{]+)[;{]/m);
-    const classMatch = content.match(/^(?:abstract\s+)?(?:class|interface|trait|enum)\s+(\w+)/m);
+    // 1. Namespace: Matches 'namespace Name;' or 'namespace Name {'
+    const nsMatch = content.match(/^namespace\s+([^;{\s]+)/m);
+    
+    /**
+     * 2. Class-like constructs:
+     * Supports: final, abstract, readonly (in any order)
+     * Matches: class, interface, trait, enum
+     */
+    const classMatch = content.match(/^(?:(?:final|abstract|readonly)\s+)*(?:class|interface|trait|enum)\s+(\w+)/m);
 
     if (!nsMatch || !classMatch) return null;
 
