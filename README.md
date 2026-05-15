@@ -170,9 +170,9 @@ Add the following to your `.vscode/settings.json`:
 <?php
 
 return [
-    'SmartAsk\\Core\\Loader' => 'Core/Loader.php',
-    'SmartAsk\\Admin\\Settings' => 'Admin/Settings.php',
-    'SmartAsk\\API\\Routes' => 'API/Routes.php',
+    'project_NAMESPACE\\Core\\Loader' => 'Core/Loader.php',
+    'project_NAMESPACE\\Admin\\Settings' => 'Admin/Settings.php',
+    'project_NAMESPACE\\API\\Routes' => 'API/Routes.php',
 ];
 ```
 
@@ -189,12 +189,12 @@ Add this to your main plugin bootstrap file:
  *
  * @param string $class Fully-qualified class name.
  */
-function smartask_autoload_class(string $class): void
+function project_autoload_class(string $class): void
 {
     static $classmap = null;
 
     if (null === $classmap) {
-        $file = SMARTASK_DIR . 'includes/classmap.php';
+        $file = PROJECT_DIR . 'includes/classmap.php';
 
         $classmap = file_exists($file)
             ? require $file
@@ -202,11 +202,11 @@ function smartask_autoload_class(string $class): void
     }
 
     if (isset($classmap[$class])) {
-        require_once SMARTASK_DIR . 'includes/' . $classmap[$class];
+        require_once PROJECT_DIR . 'includes/' . $classmap[$class];
     }
 }
 
-spl_autoload_register('smartask_autoload_class');
+spl_autoload_register('project_autoload_class');
 ```
 
 ---
