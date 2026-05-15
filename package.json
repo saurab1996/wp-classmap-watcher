@@ -1,0 +1,72 @@
+{
+ "name": "wp-classmap-watcher",
+  "displayName": "WP Classmap: Lightning Fast Autoloading",
+  "description": "Auto-rebuilds PHP classmap(s) when files are added, deleted or renamed in a WordPress plugin",
+  "version": "0.1.1",
+  "publisher": "Saurab Gupta",
+  "homepage": "http://saurabgupta.in/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saurab1996/wp-classmap-watcher"
+  },
+  "author": {
+    "name": "Saurab Gupta",
+    "url": "http://saurabgupta.in/"
+  },
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch":   "tsc -watch -p ./",
+    "package": "npm run compile && vsce package"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "wpClassmap.rebuild",
+        "title": "WP: Rebuild Classmap(s)"
+      },
+      {
+        "command": "wpClassmap.addDirectory",
+        "title": "WP: Add Classmap Directory"
+      }
+    ],
+    "configuration": {
+      "title": "WP Classmap: Lightning Fast Autoloading",
+      "properties": {
+        "wpClassmap.directories": {
+          "type": "array",
+          "description": "Multiple directories — each gets its own classmap file.",
+          "items": {
+            "type": "object",
+            "required": ["includesDir", "outputFile"],
+            "properties": {
+              "includesDir": { "type": "string" },
+              "outputFile":  { "type": "string" }
+            }
+          },
+          "default": []
+        },
+        "wpClassmap.watchOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also rebuild when a PHP file is saved."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node":   "^18.0.0",
+    "@types/vscode": "^1.70.0",
+    "@vscode/vsce":  "^2.19.0",
+    "typescript":    "^5.0.0"
+  }
+}
