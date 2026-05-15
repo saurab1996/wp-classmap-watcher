@@ -78,55 +78,18 @@ Result:
 
 # 📦 Installation
 
-The extension is currently not published on the VS Code Marketplace yet.
+# 📦 Installation
 
-For now, install it manually by cloning the repository and building the `.vsix` package locally.
+Install the extension directly from the VS Code Marketplace:
 
-## 1. Install Dependencies
+👉 https://marketplace.visualstudio.com/items?itemName=saurab-gupta.wp-classmap-watcher
 
-```bash
-npm install
-```
+## Via VS Code
 
----
-
-## 2. Compile & Package
-
-This command compiles the TypeScript source and generates the `.vsix` extension package:
-
-```bash
-npm run package
-```
-
----
-
-## 3. Local Installation
-
-Install the generated `.vsix` file into VS Code.
-
-### Via VS Code UI
-
-```txt
-Extensions View → ... → Install from VSIX...
-```
-
-### Via CLI
-
-```bash
-code --install-extension wp-classmap-x.x.x.vsix
-```
-
----
-
-# 💡 Pro Tip
-
-For safer production builds, use a clean packaging script to avoid stale build artifacts:
-
-```json
-"package": "rm -rf out && npm run compile && vsce package"
-```
-
-This ensures old compiled files are removed before packaging the extension.
+1. Open Extensions (`Ctrl + Shift + X`)
+2. Search for:
+   ```txt
+   WP Classmap: Lightning Fast Autoloading
 
 ---
 
@@ -315,5 +278,77 @@ If you find it useful, consider leaving a review on the VS Code Marketplace.
 
 
 ---
+
+
+# 🛠 Development & Building
+
+If you want to contribute or build the extension from source:
+
+## 1. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## 2. Compile & Package
+
+This command compiles the TypeScript source and generates the `.vsix` extension package:
+
+```bash
+npm run package
+```
+
+---
+
+## 3. Local Installation
+
+Install the generated `.vsix` file into VS Code.
+
+### Via VS Code UI
+
+```txt
+Extensions View → ... → Install from VSIX...
+```
+
+### Via CLI
+
+```bash
+code --install-extension wp-classmap-x.x.x.vsix
+```
+
+---
+
+# 💡 Pro Tip
+
+For safer production builds, use a clean packaging script to avoid stale build artifacts:
+
+```json
+"package": "rm -rf out && npm run compile && vsce package"
+```
+
+This ensures old compiled files are removed before packaging the extension.
+
+---
+
+# 🚀 You're Ready
+
+You now have:
+
+- ⚡ High-performance PHP autoloading
+- 🔄 Automated VS Code classmap rebuilding
+- 📦 Professional `.vsix` packaging workflow
+- 🧠 Composer-style optimization without Composer
+
+Run:
+
+```bash
+npm run package
+```
+
+---
+
+# ⚙️
 
 …and ship it 🚀

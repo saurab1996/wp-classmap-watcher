@@ -4,7 +4,7 @@
   "description": "Auto-rebuilds PHP classmap(s) when files are added, deleted or renamed in a WordPress plugin",
   "version": "1.0.0",
   "publisher": "saurab-gupta",
-  "homepage": "https://saurabgupta.in/projects/wp-classmap-watcher",
+  "homepage": "https://marketplace.visualstudio.com/items?itemName=saurab-gupta.wp-classmap-watcher",
   "repository": {
     "type": "git",
     "url": "https://github.com/saurab1996/wp-classmap-watcher"
