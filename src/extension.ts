@@ -110,6 +110,7 @@ function debouncedRebuild(ms: number = 300): void {
 // ─── Watchers ────────────────────────────────────────────────────────────────
 
 function registerWatchers(context: vscode.ExtensionContext): void {
+    // Clear existing watchers
     activeWatchers.forEach(w => w.dispose());
     activeWatchers = [];
 
