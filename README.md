@@ -1,50 +1,40 @@
-# WP Classmap: Lightning-Fast WordPress Autoloading
+# PHP Classmap Watcher
 
-[![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-WP%20Classmap-blue?style=for-the-badge&logo=visual-studio-code)](https://marketplace.visualstudio.com/)
+[![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-PHP%20Classmap%20Watcher-blue?style=for-the-badge&logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=saurab-gupta.wp-classmap-watcher)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 > Stop wasting CPU cycles searching for PHP files.
 
-**WP Classmap** is a lightweight VS Code extension built specifically for WordPress developers.  
-It automatically generates a high-performance PHP classmap, replacing expensive recursive autoloading with instant `$O(1)$` lookups.
+**PHP Classmap Watcher** is a lightweight VS Code extension for any PHP project.  
+It automatically generates a high-performance classmap, replacing expensive recursive autoloading with instant O(1) lookups.
 
 Think of it as **Composer-style optimized autoloading**, without requiring Composer.
 
+Works with **WordPress plugins**, **Laravel**, **Symfony**, **custom frameworks** — any PHP project.
+
 ---
 
-# ✨ Features
+## ✨ Features
 
-- ⚡ **Lightning-Fast Autoloading**  
-  Replace `file_exists()` loops and recursive scans with direct array lookups.
-
-- 🧠 **Zero-Configuration Runtime**  
-  Your PHP autoloader only needs the generated classmap file.
-
-- 🔄 **Automatic Rebuilding**  
-  Instantly updates when files are created, renamed, deleted, or saved.
-
-- 📁 **Multi-Directory Support**  
-  Scan multiple folders simultaneously:
-  - `includes/`
-  - `src/`
-  - `api/`
-  - `modules/`
-  - etc.
-
-- 📊 **Status Bar Integration**
-  - Total indexed classes
-  - Rebuild progress indicator
-  - One-click rebuild access
-
+- ⚡ **Lightning-Fast Autoloading** — replace filesystem scans with direct array lookups
+- 🔄 **Automatic Rebuilding** — updates instantly when files are created, renamed or deleted
+- 👁 **Window Focus Rebuild** — detects changes made outside VS Code (terminal, git) when you switch back
+- 📁 **Multi-Directory Support** — scan multiple folders, each gets its own classmap file
+- ⚠️ **Smart Warnings** — alerts on duplicate class names and multiple classes per file
+- 🚫 **Directory Exclusions** — skip `tests/`, `fixtures/` or any folder; `vendor`, `node_modules`, `.git` always excluded
+- 📊 **Status Bar Integration** — live class count, rebuild progress, warning badge
+- 🖱 **Right-Click Rebuild** — trigger rebuild from Explorer or editor context menu
 - 🚫 **No Composer Required**
+- 🚫 **No PSR-4 Required** — files can live anywhere, named anything
 
 ---
 
-# 🚀 Why Use WP Classmap?
+## 🚀 Why Use PHP Classmap Watcher?
 
-Traditional WordPress autoloaders often do this:
+Traditional autoloaders do this on every request:
 
 ```php
+// Scans filesystem on every class load
 foreach ($paths as $path) {
     if (file_exists($path . $class . '.php')) {
         require_once $path . $class . '.php';
@@ -52,303 +42,194 @@ foreach ($paths as $path) {
 }
 ```
 
-That means:
-
-- Multiple disk scans
-- Repeated filesystem checks
-- Slower request execution
-- More CPU usage
-
-WP Classmap converts that into:
+PHP Classmap Watcher converts that into:
 
 ```php
-if (isset($classmap[$class])) {
-    require_once $classmap[$class];
+// One hash lookup — no filesystem scan
+if (isset($classMap[$class])) {
+    require $classMap[$class];
 }
 ```
 
-Result:
-
-- Instant lookup
-- Minimal filesystem access
-- Faster plugin execution
-- Cleaner architecture
+| | Traditional | Classmap |
+|---|---|---|
+| Lookup cost | O(n) filesystem stats | O(1) hash lookup |
+| Miss cost | Scans all paths | 1 hash lookup, done |
+| OPcache friendly | ✗ | ✅ array interned in shared memory |
+| PSR-4 required | Often | Never |
 
 ---
 
-# 📦 Installation
+## 📦 Installation
 
-# 📦 Installation
-
-Install the extension directly from the VS Code Marketplace:
+Install directly from the VS Code Marketplace:
 
 👉 https://marketplace.visualstudio.com/items?itemName=saurab-gupta.wp-classmap-watcher
 
-## Via VS Code
-
+Or via VS Code:
 1. Open Extensions (`Ctrl + Shift + X`)
-2. Search for:
-   ```txt
-   WP Classmap: Lightning Fast Autoloading
+2. Search: `PHP Classmap Watcher`
+3. Click Install
 
 ---
 
-# 🚀 You're Ready
+## ⚙️ Configuration
 
-You now have:
-
-- ⚡ High-performance PHP autoloading
-- 🔄 Automated VS Code classmap rebuilding
-- 📦 Professional `.vsix` packaging workflow
-- 🧠 Composer-style optimization without Composer
-
-Run:
-
-```bash
-npm run package
-```
-
----
-
-# ⚙️ Configuration
-
-Add the following to your `.vscode/settings.json`:
+Paths are **absolute**. Add to your global VS Code settings (`Ctrl + ,` → open `settings.json`):
 
 ```json
 {
     "wpClassmap.directories": [
         {
-            "includesDir": "includes",
-            "outputFile": "includes/classmap.php"
+            "includesDir": "/home/user/my-plugin/includes",
+            "outputFile":  "/home/user/my-plugin/classmap.php",
+            "exclude":     ["tests", "fixtures"]
         }
     ]
 }
 ```
 
----
-
-# 🛠 Example Generated Classmap
-
-```php
-<?php
-
-return [
-    'project_NAMESPACE\\Core\\Loader' => 'Core/Loader.php',
-    'project_NAMESPACE\\Admin\\Settings' => 'Admin/Settings.php',
-    'project_NAMESPACE\\API\\Routes' => 'API/Routes.php',
-];
-```
-
----
-
-# 🧩 Optimized PHP Autoloader
-
-Add this to your main plugin bootstrap file:
-
-```php
-<?php
-/**
- * Optimized Classmap Autoloader
- *
- * @param string $class Fully-qualified class name.
- */
-function project_autoload_class(string $class): void
-{
-    static $classmap = null;
-
-    if (null === $classmap) {
-        $file = PROJECT_DIR . 'includes/classmap.php';
-
-        $classmap = file_exists($file)
-            ? require $file
-            : [];
-    }
-
-    if (isset($classmap[$class])) {
-        require_once PROJECT_DIR . 'includes/' . $classmap[$class];
-    }
-}
-
-spl_autoload_register('project_autoload_class');
-```
-
----
-
-# 🔄 Automatic Watching
-
-WP Classmap can automatically rebuild mappings whenever files change.
-
-Enable watch-on-save:
+Multiple directories — each gets its own classmap file:
 
 ```json
 {
-    "wpClassmap.watchOnSave": true
+    "wpClassmap.directories": [
+        {
+            "includesDir": "/home/user/my-plugin/includes",
+            "outputFile":  "/home/user/my-plugin/includes/classmap.php"
+        },
+        {
+            "includesDir": "/home/user/my-plugin/src",
+            "outputFile":  "/home/user/my-plugin/src/classmap.php"
+        }
+    ]
 }
 ```
 
----
-
-# ⌨️ Commands
-
-Open the Command Palette (`Ctrl + Shift + P`) and search for:
-
-| Command | Description |
-|---|---|
-| `WP Classmap: Rebuild` | Force a complete rebuild of all configured directories |
-| `WP Classmap: Add Directory` | Quickly add a new scan target using a folder picker |
-
----
-
-# ⚙️ Settings Reference
+### All Settings
 
 | Setting | Type | Default | Description |
 |---|---|---|---|
-| `wpClassmap.directories` | `array` | `[]` | List of `{ includesDir, outputFile }` configurations |
-| `wpClassmap.watchOnSave` | `boolean` | `false` | Automatically rebuild on every file save |
+| `wpClassmap.directories` | `array` | `[]` | List of `{ includesDir, outputFile, exclude? }` |
+| `wpClassmap.exclude` | `array` | `[]` | Directory names excluded from all scans |
+| `wpClassmap.watchOnSave` | `boolean` | `false` | Also rebuild when a PHP file is saved |
+
+> `vendor`, `node_modules`, and `.git` are always excluded regardless of config.
 
 ---
 
-# 📊 Status Bar Integration
+## 🧩 PHP Autoloader
 
-WP Classmap adds a lightweight status indicator to the VS Code status bar.
+Add this to your main bootstrap file:
 
-### Features
+```php
+<?php
 
-- 📦 Total indexed class count
-- 🔄 Spinning rebuild indicator
-- 🧾 Hover details for scanned directories
-- 🖱 Click to manually rebuild
+$classMap = require __DIR__ . '/classmap.php';
+$base     = __DIR__ . '/includes/';
+
+spl_autoload_register(function (string $class) use ($classMap, $base): void {
+    if (!isset($classMap[$class])) return; // O(1) — only check on miss
+    require $base . $classMap[$class];     // direct require on hit
+});
+```
+
+- **Miss** = 1 hash lookup, nothing else
+- **Hit** = 1 hash lookup + `require`
+- No `str_replace`, no path derivation, no filesystem stat
 
 ---
 
-# 📁 Recommended Project Structure
+## 🛠 Example Generated Classmap
 
-```txt
-my-plugin/
-├── includes/
-│   ├── Core/
-│   ├── Admin/
-│   ├── API/
-│   └── classmap.php
-├── my-plugin.php
-└── .vscode/
-    └── settings.json
+```php
+<?php
+// Auto-generated by PHP Classmap Watcher — 2025-01-01T00:00:00.000Z
+// Do not edit manually.
+return array(
+    'MyPlugin\\Admin\\Settings'   => 'Admin/Settings.php',
+    'MyPlugin\\Api\\Routes'       => 'Api/Routes.php',
+    'MyPlugin\\Core\\Loader'      => 'Core/Loader.php',
+);
 ```
 
 ---
 
-# ✅ Requirements
+## ⌨️ Commands
 
-- VS Code
-- PHP 7.4+ or PHP 8+
-- WordPress plugin or theme project
+| Command | Description |
+|---|---|
+| `PHP: Rebuild Classmap(s)` | Force a full rebuild of all configured directories |
+| `PHP: Add Classmap Directory` | Add a new directory via prompt |
 
-Supported platforms:
-
-- Windows
-- macOS
-- Linux
+Right-click any `.php` file or folder in the Explorer → **PHP: Rebuild Classmap**
 
 ---
 
-# 🚫 No External Dependencies
+## 📊 Status Bar
 
-WP Classmap does not require:
+```
+$(symbol-class) Classmap: 42          — idle, 42 classes indexed
+$(sync~spin) Rebuilding...             — rebuild in progress
+$(check) Classmap: 42                  — just finished
+$(warning) Classmap: 42 $(warning)3   — finished with 3 warnings
+$(error) Classmap: 1 error(s)         — a directory was not found
+```
 
-- Composer
-- PSR-4 setup
-- Vendor directories
-- Third-party libraries
-
-Just install the extension and start indexing classes.
-
----
-
-# 📄 License
-
-Released under the MIT License.
+Click the status bar item at any time to trigger a manual rebuild.
 
 ---
 
-# ❤️ Built for WordPress Developers
+## ⚠️ Warnings
 
-WP Classmap was created to make WordPress plugin development faster, cleaner, and more scalable.
+The extension warns about:
 
-If you find it useful, consider leaving a review on the VS Code Marketplace.
+- **Multiple classes in one file** — only the first is mapped; split into separate files
+- **Duplicate class names** — same fully-qualified class in two files; last one wins
 
+Warnings appear as VS Code notifications with a **Show Files** / **Show Details** action.
 
 ---
 
+## 🔄 Keeping the Map Fresh Outside VS Code
 
-# 🛠 Development & Building
+The watcher covers file changes inside VS Code. For changes made outside (terminal, git):
 
-If you want to contribute or build the extension from source:
+- **Window focus** — the map automatically rebuilds whenever you switch back to VS Code
+- **Right-click rebuild** — manually trigger from Explorer or editor at any time
 
-## 1. Install Dependencies
+---
+
+## ✅ Requirements
+
+- VS Code 1.70+
+- Any PHP project (WordPress, Laravel, Symfony, custom)
+- PHP files must declare `namespace` and `class` / `interface` / `trait` / `enum`
+
+Supported platforms: Windows · macOS · Linux
+
+---
+
+## 🚫 No External Dependencies
+
+Does not require Composer, PSR-4, vendor directories, or any third-party libraries.
+
+---
+
+## 🛠 Building from Source
 
 ```bash
 npm install
+npm run package   # compiles TypeScript + produces .vsix
 ```
 
----
-
-## 2. Compile & Package
-
-This command compiles the TypeScript source and generates the `.vsix` extension package:
-
+Install the `.vsix`:
 ```bash
-npm run package
+code --install-extension php-classmap-watcher-0.2.0.vsix
 ```
 
 ---
 
-## 3. Local Installation
+## 📄 License
 
-Install the generated `.vsix` file into VS Code.
-
-### Via VS Code UI
-
-```txt
-Extensions View → ... → Install from VSIX...
-```
-
-### Via CLI
-
-```bash
-code --install-extension wp-classmap-x.x.x.vsix
-```
-
----
-
-# 💡 Pro Tip
-
-For safer production builds, use a clean packaging script to avoid stale build artifacts:
-
-```json
-"package": "rm -rf out && npm run compile && vsce package"
-```
-
-This ensures old compiled files are removed before packaging the extension.
-
----
-
-# 🚀 You're Ready
-
-You now have:
-
-- ⚡ High-performance PHP autoloading
-- 🔄 Automated VS Code classmap rebuilding
-- 📦 Professional `.vsix` packaging workflow
-- 🧠 Composer-style optimization without Composer
-
-Run:
-
-```bash
-npm run package
-```
-
----
-
-# ⚙️
-
-…and ship it 🚀
+MIT

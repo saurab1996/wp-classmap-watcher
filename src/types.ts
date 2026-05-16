@@ -1,6 +1,7 @@
 export interface DirectoryConfig {
     includesDir: string;
     outputFile:  string;
+    exclude?:    string[];
 }
 
 export interface ClassInfo {
@@ -16,5 +17,12 @@ export interface GenerateResult {
     includesDir: string;
     count:       number;
     outputPath:  string;
+    warnings:    Warning[];
     error?:      string;
+}
+
+export interface Warning {
+    type:    'duplicate_class' | 'multiple_classes_in_file';
+    message: string;
+    file:    string;
 }

@@ -1,8 +1,8 @@
 {
  "name": "wp-classmap-watcher",
-  "displayName": "WP Classmap: Lightning Fast Autoloading",
-  "description": "Auto-rebuilds PHP classmap(s) when files are added, deleted or renamed in a WordPress plugin",
-  "version": "1.0.0",
+  "displayName": "PHP Classmap Watcher",
+  "description": "Auto-rebuilds a PHP classmap file when classes are added, deleted or renamed — works with any PHP project",
+  "version": "1.1.0",
   "publisher": "saurab-gupta",
   "homepage": "https://marketplace.visualstudio.com/items?itemName=saurab-gupta.wp-classmap-watcher",
   "repository": {
@@ -17,7 +17,15 @@
     "vscode": "^1.70.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
+  ],
+  "keywords":[
+    "php",
+    "classmap",
+    "autoloader",
+    "wordpress",
+    "performance"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -26,41 +34,98 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch":   "tsc -watch -p ./",
-    "package": "npm run compile && vsce package"
+    "package": "rm -rf out && npm run compile && vsce package"
   },
-  "contributes": {
+ "contributes": {
     "commands": [
       {
         "command": "wpClassmap.rebuild",
-        "title": "WP: Rebuild Classmap(s)"
+        "title": "PHP: Rebuild Classmap(s)"
       },
       {
         "command": "wpClassmap.addDirectory",
-        "title": "WP: Add Classmap Directory"
+        "title": "PHP: Add Classmap Directory"
+      },
+      {
+        "command": "wpClassmap.rebuildFromContext",
+        "title": "PHP: Rebuild Classmap"
       }
     ],
     "configuration": {
-      "title": "WP Classmap: Lightning Fast Autoloading",
+      "title": "PHP Classmap Watcher",
       "properties": {
         "wpClassmap.directories": {
           "type": "array",
-          "description": "Multiple directories — each gets its own classmap file.",
+          "description": "Directories to scan — each gets its own classmap file.",
           "items": {
             "type": "object",
-            "required": ["includesDir", "outputFile"],
+            "required": [
+              "includesDir",
+              "outputFile"
+            ],
             "properties": {
-              "includesDir": { "type": "string" },
-              "outputFile":  { "type": "string" }
+              "includesDir": {
+                "type": "string",
+                "description": "Full absolute path of the directory to scan"
+              },
+              "outputFile": {
+                "type": "string",
+                "description": "Full absolute path of the output classmap file"
+              },
+              "exclude": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Directory names to skip (e.g. [\"tests\", \"fixtures\"])",
+                "default": []
+              }
             }
           },
-          "default": []
+          "default": [],
+          "examples": [
+            [
+              {
+                "includesDir": "/home/user/wp-content/plugins/my-plugin/includes",
+                "outputFile": "/home/user/wp-content/plugins/my-plugin/classmap.php",
+                "exclude": [
+                  "tests",
+                  "fixtures"
+                ]
+              }
+            ]
+          ]
         },
         "wpClassmap.watchOnSave": {
           "type": "boolean",
           "default": false,
           "description": "Also rebuild when a PHP file is saved."
+        },
+        "wpClassmap.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Global directory names to exclude from all scans. vendor, node_modules and .git are always excluded."
         }
       }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "wpClassmap.rebuildFromContext",
+          "when": "resourceExtname == .php || explorerResourceIsFolder",
+          "group": "phpClassmap@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "wpClassmap.rebuildFromContext",
+          "when": "resourceExtname == .php",
+          "group": "phpClassmap@1"
+        }
+      ]
     }
   },
   "devDependencies": {

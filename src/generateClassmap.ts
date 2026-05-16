@@ -1,18 +1,11 @@
 import * as fs   from 'fs';
 import * as path from 'path';
-import { ClassInfo, ClassMap, DirectoryConfig, GenerateResult } from './types';
+import { ClassInfo, ClassMap, DirectoryConfig, GenerateResult, Warning } from './types';
 
 // ─── PHP Parsing ─────────────────────────────────────────────────────────────
 
 function extractClassInfo(content: string): ClassInfo | null {
-    // 1. Namespace: Matches 'namespace Name;' or 'namespace Name {'
-    const nsMatch = content.match(/^namespace\s+([^;{\s]+)/m);
-    
-    /**
-     * 2. Class-like constructs:
-     * Supports: final, abstract, readonly (in any order)
-     * Matches: class, interface, trait, enum
-     */
+    const nsMatch    = content.match(/^namespace\s+([^;{\s]+)/m);
     const classMatch = content.match(/^(?:(?:final|abstract|readonly)\s+)*(?:class|interface|trait|enum)\s+(\w+)/m);
 
     if (!nsMatch || !classMatch) return null;
@@ -23,13 +16,34 @@ function extractClassInfo(content: string): ClassInfo | null {
     };
 }
 
+/**
+ * Count how many class-like declarations exist in a file.
+ * Used to warn when more than one is found.
+ */
+function countClassDeclarations(content: string): number {
+    const matches = content.match(
+        /^(?:(?:final|abstract|readonly)\s+)*(?:class|interface|trait|enum)\s+\w+/mg
+    );
+    return matches ? matches.length : 0;
+}
+
+// ─── Default Exclusions ──────────────────────────────────────────────────────
+
+const DEFAULT_EXCLUDE: ReadonlySet<string> = new Set([
+    'vendor',
+    'node_modules',
+    '.git',
+]);
+
 // ─── Directory Scanner ───────────────────────────────────────────────────────
 
 function scanDir(
-    dir:         string,
-    basePath:    string, // The directory containing the classmap file
-    classMap:    ClassMap,
-    skipFile:    string,
+    dir:      string,
+    basePath: string,
+    classMap: ClassMap,
+    skipFile: string,
+    exclude:  ReadonlySet<string>,
+    warnings: Warning[],
 ): void {
     let entries: fs.Dirent[];
 
@@ -43,7 +57,9 @@ function scanDir(
         const fullPath = path.join(dir, entry.name);
 
         if (entry.isDirectory()) {
-            scanDir(fullPath, basePath, classMap, skipFile);
+            // Skip excluded directory names
+            if (exclude.has(entry.name)) continue;
+            scanDir(fullPath, basePath, classMap, skipFile, exclude, warnings);
             continue;
         }
 
@@ -57,16 +73,30 @@ function scanDir(
             continue;
         }
 
+        // ── Warning: multiple classes in one file ──
+        const classCount = countClassDeclarations(content);
+        if (classCount > 1) {
+            warnings.push({
+                type:    'multiple_classes_in_file',
+                message: `${classCount} class declarations found — only the first is mapped`,
+                file:    fullPath,
+            });
+        }
+
         const info = extractClassInfo(content);
         if (!info) continue;
 
-        const fullClass = `${info.namespace}\\${info.className}`;
-        
-        // FIX: Make path relative to the OUTPUT file's directory
-        // This ensures PHP's __DIR__ . $path works correctly.
-        const relativePath = path.relative(basePath, fullPath)
-            .split(path.sep)
-            .join('/');
+        const fullClass    = `${info.namespace}\\${info.className}`;
+        const relativePath = path.relative(basePath, fullPath).split(path.sep).join('/');
+
+        // ── Warning: duplicate class name ──
+        if (classMap[fullClass]) {
+            warnings.push({
+                type:    'duplicate_class',
+                message: `"${fullClass}" already mapped from ${classMap[fullClass]} — overwritten`,
+                file:    fullPath,
+            });
+        }
 
         classMap[fullClass] = relativePath;
     }
@@ -101,40 +131,45 @@ function writeClassmapFile(classMap: ClassMap, outputPath: string): void {
 export function generateClassmap(
     includesDir: string,
     outputFile:  string,
+    exclude:     string[] = [],
 ): GenerateResult {
     const scanPath   = path.resolve(includesDir);
     const outputPath = path.resolve(outputFile);
-    const outputDir  = path.dirname(outputPath); // Base for relative paths
+    const outputDir  = path.dirname(outputPath);
 
     if (!fs.existsSync(scanPath)) {
         throw new Error(`Directory not found: ${scanPath}`);
     }
 
+    // Merge user exclusions with defaults
+    const excludeSet = new Set([...DEFAULT_EXCLUDE, ...exclude]);
+
     const classMap: ClassMap = {};
-    
-    // We pass outputDir so paths in the PHP file are relative to the file itself
-    scanDir(scanPath, outputDir, classMap, outputPath);
-    
+    const warnings: Warning[] = [];
+
+    scanDir(scanPath, outputDir, classMap, outputPath, excludeSet, warnings);
     writeClassmapFile(classMap, outputPath);
 
-    return { 
-        includesDir: path.basename(scanPath), 
-        count: Object.keys(classMap).length, 
-        outputPath 
+    return {
+        includesDir: path.basename(scanPath),
+        count:       Object.keys(classMap).length,
+        outputPath,
+        warnings,
     };
 }
 
 export function generateAllClassmaps(
     directories: DirectoryConfig[],
 ): GenerateResult[] {
-    return directories.map(({ includesDir, outputFile }) => {
+    return directories.map(({ includesDir, outputFile, exclude = [] }) => {
         try {
-            return generateClassmap(includesDir, outputFile);
+            return generateClassmap(includesDir, outputFile, exclude);
         } catch (err) {
             return {
                 includesDir,
                 count:      0,
                 outputPath: outputFile,
+                warnings:   [],
                 error:      (err as Error).message,
             };
         }
